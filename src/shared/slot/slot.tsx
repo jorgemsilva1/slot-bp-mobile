@@ -22,8 +22,8 @@ export type VariablesType = {
     time_per_icon: number;
     indexes: [number, number, number];
 };
-
 export const Slot = ({
+
     config,
     onWin,
     awards,
@@ -328,9 +328,10 @@ const Container = styled.main`
 
     &,
     &::backdrop {
-        background-color: #242424;
+        background: url('/img/bg.jpg');
     }
-`;
+    `;
+    /*background-color: #242424;*/ 
 
 const SlotMachine = styled.section<{ _variables: SlotConfigType }>`
     display: flex;
@@ -341,7 +342,7 @@ const SlotMachine = styled.section<{ _variables: SlotConfigType }>`
     padding: ${({ _variables }) => `${_variables.icon_height * 0.05}px`};
     border: 1px solid #aaa;
     border-radius: 4px;
-    margin-bottom: 5dvh;
+    margin-bottom: 25dvh;
 
     .reel {
         position: relative;

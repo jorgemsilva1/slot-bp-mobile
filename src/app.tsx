@@ -40,23 +40,27 @@ export function App() {
     const awardsRef = useRef();
     const [slotConfig, setSlotConfig] = useState<SlotConfigType>({
         win_percentage: 'auto',
-        icon_width: 80 /** 5*/,
-        icon_height: 80 /** 5*/,
-        icon_num: 4,
+        icon_width: 450 /** 5*/,
+        icon_height: 450 /** 5*/,
+        icon_num: 5,
         time_per_icon: 100,
         indexes: [0, 0, 0],
         theme: 'soccer',
-        reelImg: '/img/soccer-grid.png',
+        reelImg: '/img/reel.jpg',
         additional_rotations: 2,
-        number_of_reels: 5,
+        number_of_reels: 4,
         user_type: 'regular',
         blocked: true,
         num_of_plays: null,
     });
 
     const fetchInitialData = useCallback(async (isBacana?: boolean) => {
+        let res = await fetch(`${CONFIG.apiUrl}/api/configs?populate=awards.icon,theme`, {
+            cache: 'no-cache'
+        });
+        res = await res.json()
         const response = await axios.get(
-            `${CONFIG.apiUrl}/api/configs?populate=awards.icon,theme`
+            `${CONFIG.apiUrl}/api/configs?populate=awards.icon,theme&timestamp=${new Date().getTime()}`
         );
         let activeSlot = response.data.data.find(
             (el: any) => el.attributes.active
@@ -92,6 +96,8 @@ export function App() {
             theme,
         };
 
+        debugger
+
         setSlotConfig((prevValue) => ({
             ...prevValue,
             icon_num: rewards.length,
@@ -100,6 +106,8 @@ export function App() {
         }));
         awardsRef.current = activeSlot;
     }, []);
+
+    console.log(slotConfig)
 
     const handleOnWin = async (wonIndex: number) => {
         const internalConfig = awardsRef.current;
@@ -165,7 +173,9 @@ export function App() {
                 awards={awardsRef.current?.rewards}
                 fetchInitialData={fetchInitialData}
             />
-            <Config config={slotConfig} setConfig={setSlotConfig} />
+            
         </>
     );
 }
+
+/** <Config config={slotConfig} setConfig={setSlotConfig} /> **/
