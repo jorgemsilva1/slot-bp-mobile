@@ -514,8 +514,10 @@ const BtnContainer = styled.div`
     align-items: center;
     justify-content: center;
     row-gap: 12px;
+    pointer-events: none;
 
     img {
+        pointer-events: all;
         width: 60%;
     }
 `;
