@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import {
+    useCallback,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'preact/hooks';
 import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import { FaVolumeUp, FaVolumeOff } from 'react-icons/fa';
 import styled from 'styled-components';
@@ -6,6 +12,12 @@ import { SlotConfigType, SlotReward } from '../../app';
 import { probabilityCalc, shouldBeTrue } from '../../helpers/functions';
 import { SoundManager } from '../../components/soundManager/soundManager';
 import { BiFullscreen, BiExitFullscreen } from 'react-icons/bi';
+
+// BTNS
+import PlayBtn from '../../assets/svg/play-btn.svg';
+import UserBacanaBtn from '../../assets/svg/btn-user-bp.svg';
+import NonUserBacanaBtn from '../../assets/svg/btn-user-non-bp.svg';
+import RollBtn from '../../assets/svg/roll-btn.svg';
 
 type SlotProps = {
     onWin: (wonindex: number) => any;
@@ -207,10 +219,15 @@ export const Slot = ({
         }
     }, [numberOfPlays]);
 
+    const bg = useMemo(
+        () => (!gameOver ? '/img/bg-one.png' : '/img/bg_go.png'),
+        [gameOver]
+    );
+
     return (
         <FullScreen handle={fsHandle}>
             {!gameOver ? (
-                <Container>
+                <Container bg="/img/bg-one.png">
                     {!clickedPlay ? (
                         <button
                             style={{ position: 'absolute', bottom: 50 }}
@@ -264,14 +281,11 @@ export const Slot = ({
                     )}
                 </Container>
             ) : (
-                <Container>
-                    <h1>Game Over!</h1>
-                    <hr />
-                    <h3>Prémios:</h3>
-                    <ul>
+                <Container id="gameover-container" bg="/img/bg_go.png">
+                    <ul id="prizes">
                         {myArr.current.map((item, index) => (
-                            <li key={index}>
-                                {index + 1}: {item ? item : 'Sem prémio'}
+                            <li key={index} className={item ? 'prize' : ''}>
+                                {index + 1}. {item ? item : 'Sem prémio'}
                             </li>
                         ))}
                     </ul>
@@ -280,27 +294,31 @@ export const Slot = ({
             <div
                 style={{
                     position: 'absolute',
-                    top: 20,
-                    left: 20,
+                    top: 55,
+                    right: 60,
                     display: 'flex',
-                    columnGap: 8,
+                    columnGap: 4,
                 }}
             >
                 <AudioBtn onClick={activateAmbienceSound}>
                     {hasSound ? <FaVolumeUp /> : <FaVolumeOff />}
                 </AudioBtn>
+                <AudioBtn width="auto" onClick={handleRestart}>
+                    <p>Restart</p>
+                </AudioBtn>
                 <AudioBtn
                     onClick={fsHandle.active ? fsHandle.exit : fsHandle.enter}
                 >
-                    {!fsHandle.active ? <BiFullscreen /> : <BiExitFullscreen />}
+                    {!fsHandle.active ? (
+                        <BiFullscreen className="fs" />
+                    ) : (
+                        <BiExitFullscreen className="fs" />
+                    )}
                 </AudioBtn>
 
-                <AudioBtn width="auto" onClick={handleRestart}>
-                    Restart
-                </AudioBtn>
-                <AudioBtn width="auto" onClick={handleClickRoll}>
+                {/* <AudioBtn width="auto" onClick={handleClickRoll}>
                     Roll
-                </AudioBtn>
+                </AudioBtn> */}
             </div>
             <SoundManager
                 ref={ambienceSoundRef}
@@ -333,6 +351,43 @@ export const Slot = ({
                 volume={0.1}
                 playing
             />
+            {gameOver ? (
+                <></>
+            ) : (
+                <BtnContainer>
+                    {!clickedPlay ? (
+                        <img
+                            onClick={() => {
+                                setClickedPlay(true);
+                                ambienceSoundRef.current.setVolume(0.04);
+                                clickSoundRef.current.playSound();
+                            }}
+                            src={PlayBtn}
+                            alt="btn"
+                        />
+                    ) : clickedPlay && typeof numberOfPlays !== 'number' ? (
+                        <>
+                            <img
+                                onClick={() => handleClickUserType(true)}
+                                src={UserBacanaBtn}
+                                alt="btn"
+                            />
+
+                            <img
+                                onClick={() => handleClickUserType(false)}
+                                src={NonUserBacanaBtn}
+                                alt="btn"
+                            />
+                        </>
+                    ) : (
+                        <img
+                            onClick={handleClickRoll}
+                            src={RollBtn}
+                            alt="btn"
+                        />
+                    )}
+                </BtnContainer>
+            )}
         </FullScreen>
     );
 };
@@ -347,20 +402,42 @@ const Container = styled.main`
     align-items: center;
     row-gap: 12px;
 
-    &,
-    &::backdrop {
-        background: url('/img/main-bg.jpg');
+    background: ${({ bg }) => `url(${bg})`};
+
+    #prizes {
+        z-index: 9;
     }
 
-    &:after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: url('/img/header-bg.png');
-        pointer-events: none;
+    &#gameover-container {
+        justify-content: flex-start;
+        padding-top: 370px;
+
+        * {
+            color: #000;
+            text-transform: uppercase;
+        }
+
+        ul {
+            max-height: 200px;
+            overflow: auto;
+            position: relative;
+            top: -48px;
+            padding-left: 0;
+
+            list-style: none;
+
+            li {
+                text-align: center;
+                font-family: 'Futura';
+                font-weight: bold;
+                font-size: 16px;
+
+                &.prize {
+                    font-size: 20px;
+                    color: #e45525;
+                }
+            }
+        }
     }
 `;
 /*background-color: #242424;*/
@@ -372,8 +449,7 @@ const SlotMachine = styled.section<{ _variables: SlotConfigType }>`
         `${_variables.icon_width * (_variables.number_of_reels * 1.04)}px`};
     height: ${({ _variables }) => `${_variables.icon_height * 3}px`};
     padding: ${({ _variables }) => `${_variables.icon_height * 0.05}px`};
-    border: 1px solid #aaa;
-    border-radius: 4px;
+    margin-top: 20vh;
 
     .reel {
         position: relative;
@@ -390,14 +466,66 @@ const SlotMachine = styled.section<{ _variables: SlotConfigType }>`
     }
 `;
 
+// const AudioBtn = styled.button`
+//     width: ${({ width }) => width || '50px'};
+//     height: 50px;
+//     display: flex;
+//     align-items: center;
+//     justify-content: center;
+
+//     svg {
+//         transform: scale(2);
+//     }
+// `;
+
 const AudioBtn = styled.button`
+    position: relative;
     width: ${({ width }) => width || '50px'};
     height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
+    text-transform: uppercase;
+    font-weight: bold;
+    background: white;
+    color: black;
+    border-radius: 0;
+    border: 4px solid black;
+    font-weight: bold;
+
+    .fs {
+        transform: scale(8);
+    }
 
     svg {
-        transform: scale(2);
+        transform: scale(4);
     }
+`;
+
+const BtnContainer = styled.div`
+    position: absolute;
+    bottom: 40px;
+    right: 0;
+    width: 217px;
+    padding-right: 12px;
+    height: 401px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    row-gap: 12px;
+
+    img {
+        width: 60%;
+    }
+`;
+
+const Background = styled.div`
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: ${({ bg }) => `url('/img/bg_${bg}.png')`};
+    background-position: 0 3vh;
 `;

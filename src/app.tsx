@@ -3,7 +3,6 @@ import { Slot } from './shared';
 import { VariablesType } from './shared/slot/slot';
 import axios from 'axios';
 import { CONFIG } from './config/index.';
-import { Config } from './components/config/config';
 
 export type SlotConfigType = {
     win_percentage: number | 'auto';
@@ -46,7 +45,7 @@ export function App() {
         time_per_icon: 100,
         indexes: [0, 0, 0],
         theme: 'soccer',
-        reelImg: '/img/reel.jpg',
+        reelImg: '/img/reel.png',
         additional_rotations: 2,
         number_of_reels: 4,
         user_type: 'regular',
@@ -96,11 +95,8 @@ export function App() {
 
         setSlotConfig((prevValue) => ({
             ...prevValue,
-            icon_num: rewards.length,
-            win_percentage:
-                isBacana === undefined
-                    ? prevValue.win_percentage
-                    : winningChance,
+            // icon_num: rewards.length,
+            win_percentage: 40,
             num_of_plays: isBacana === undefined ? null : isBacana ? 10 : 5,
         }));
         awardsRef.current = activeSlot;
