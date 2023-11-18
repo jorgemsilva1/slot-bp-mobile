@@ -43,10 +43,10 @@ export const Slot = ({
 }: SlotProps) => {
     const fsHandle = useFullScreenHandle();
     const myArr = useRef([]);
-    const disabled = useRef(true);
+    const disabled = useRef(false);
     const [gameOver, setGameOver] = useState(false);
-    const [clickedPlay, setClickedPlay] = useState(false);
-    const [numberOfPlays, setNumberOfPlays] = useState(null);
+    const [clickedPlay, setClickedPlay] = useState(true);
+    const [numberOfPlays, setNumberOfPlays] = useState(1);
     const [prizes, setPrizes] = useState<string[]>([]);
     const reelsRef = useRef([]);
 
@@ -181,11 +181,9 @@ export const Slot = ({
         ambienceSoundRef.current.setVolume(0.2);
         await fetchInitialData();
         myArr.current = [];
-        disabled.current = [];
+        disabled.current = false;
         reelsRef.current = [];
         setGameOver(false);
-        setClickedPlay(false);
-        setNumberOfPlays(null);
         setPrizes([]);
     }, [fetchInitialData]);
 
@@ -215,7 +213,7 @@ export const Slot = ({
         if (numberOfPlays === 0) {
             ambienceSoundRef.current.setVolume(0.2);
 
-            setGameOver(true);
+            // setGameOver(true);
         }
     }, [numberOfPlays]);
 

@@ -96,7 +96,7 @@ export function App() {
         setSlotConfig((prevValue) => ({
             ...prevValue,
             // icon_num: rewards.length,
-            win_percentage: 40,
+            win_percentage: 100,
             num_of_plays:
                 1 || isBacana === undefined ? null : isBacana ? 10 : 5,
         }));
