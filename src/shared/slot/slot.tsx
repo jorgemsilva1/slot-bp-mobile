@@ -328,8 +328,8 @@ export const Slot = ({
 };
 
 const Container = styled.main`
-    width: 100dvw;
-    height: 100dvh;
+    width: 1340px;
+    height: 800px;
     display: flex;
     flex-direction: column;
     justify-content: center;
