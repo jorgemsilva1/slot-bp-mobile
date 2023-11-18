@@ -23,7 +23,6 @@ export type VariablesType = {
     indexes: [number, number, number];
 };
 export const Slot = ({
-
     config,
     onWin,
     awards,
@@ -188,6 +187,14 @@ export const Slot = ({
         });
     }, [awards?.length, gameOver, handleReset, handleRoll]);
 
+    const handleClickRoll = useCallback(async () => {
+        if (awards?.length && !disabled.current) {
+            handleReset();
+            disabled.current = true;
+            await handleRoll();
+        }
+    }, [awards?.length, handleReset, handleRoll]);
+
     useEffect(() => {
         if (config.num_of_plays) setNumberOfPlays(config.num_of_plays);
     }, [config.num_of_plays]);
@@ -281,6 +288,9 @@ export const Slot = ({
                 <AudioBtn width="auto" onClick={handleRestart}>
                     Restart
                 </AudioBtn>
+                <AudioBtn width="auto" onClick={handleClickRoll}>
+                    Roll
+                </AudioBtn>
             </div>
             <SoundManager
                 ref={ambienceSoundRef}
@@ -328,10 +338,12 @@ const Container = styled.main`
 
     &,
     &::backdrop {
-        background: url('/img/bg.jpg');
+        background: url('/img/bg_one.png');
+        background-size: 71%;
+        background-position: center -200px;
     }
-    `;
-    /*background-color: #242424;*/ 
+`;
+/*background-color: #242424;*/
 
 const SlotMachine = styled.section<{ _variables: SlotConfigType }>`
     display: flex;
@@ -342,7 +354,6 @@ const SlotMachine = styled.section<{ _variables: SlotConfigType }>`
     padding: ${({ _variables }) => `${_variables.icon_height * 0.05}px`};
     border: 1px solid #aaa;
     border-radius: 4px;
-    margin-bottom: 25dvh;
 
     .reel {
         position: relative;

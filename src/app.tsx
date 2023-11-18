@@ -40,8 +40,8 @@ export function App() {
     const awardsRef = useRef();
     const [slotConfig, setSlotConfig] = useState<SlotConfigType>({
         win_percentage: 'auto',
-        icon_width: 450 /** 5*/,
-        icon_height: 450 /** 5*/,
+        icon_width: 200 /** 5*/,
+        icon_height: 200 /** 5*/,
         icon_num: 5,
         time_per_icon: 100,
         indexes: [0, 0, 0],
@@ -55,12 +55,10 @@ export function App() {
     });
 
     const fetchInitialData = useCallback(async (isBacana?: boolean) => {
-        let res = await fetch(`${CONFIG.apiUrl}/api/configs?populate=awards.icon,theme`, {
-            cache: 'no-cache'
-        });
-        res = await res.json()
         const response = await axios.get(
-            `${CONFIG.apiUrl}/api/configs?populate=awards.icon,theme&timestamp=${new Date().getTime()}`
+            `${
+                CONFIG.apiUrl
+            }/api/configs?populate=awards.icon,theme&timestamp=${new Date().getTime()}`
         );
         let activeSlot = response.data.data.find(
             (el: any) => el.attributes.active
@@ -96,18 +94,19 @@ export function App() {
             theme,
         };
 
-        debugger
-
         setSlotConfig((prevValue) => ({
             ...prevValue,
             icon_num: rewards.length,
-            win_percentage: winningChance,
+            win_percentage:
+                isBacana === undefined
+                    ? prevValue.win_percentage
+                    : winningChance,
             num_of_plays: isBacana === undefined ? null : isBacana ? 10 : 5,
         }));
         awardsRef.current = activeSlot;
     }, []);
 
-    console.log(slotConfig)
+    console.log(slotConfig);
 
     const handleOnWin = async (wonIndex: number) => {
         const internalConfig = awardsRef.current;
@@ -137,7 +136,6 @@ export function App() {
             });
             await fetchInitialData();
         } catch (err) {
-            debugger;
             console.log(err);
         }
     };
@@ -173,7 +171,6 @@ export function App() {
                 awards={awardsRef.current?.rewards}
                 fetchInitialData={fetchInitialData}
             />
-            
         </>
     );
 }
