@@ -213,6 +213,7 @@ export const Slot = ({
                 <Container>
                     {!clickedPlay ? (
                         <button
+                            style={{ position: 'absolute', bottom: 50 }}
                             onClick={() => {
                                 setClickedPlay(true);
                                 ambienceSoundRef.current.setVolume(0.04);
@@ -222,7 +223,14 @@ export const Slot = ({
                             PLAY
                         </button>
                     ) : clickedPlay && typeof numberOfPlays !== 'number' ? (
-                        <div style={{ display: 'flex', columnGap: 8 }}>
+                        <div
+                            style={{
+                                display: 'flex',
+                                columnGap: 8,
+                                position: 'absolute',
+                                bottom: 50,
+                            }}
+                        >
                             <button onClick={() => handleClickUserType(true)}>
                                 User Bacana
                             </button>
@@ -231,7 +239,8 @@ export const Slot = ({
                             </button>
                         </div>
                     ) : (
-                        <p>Jogada: {numberOfPlays}</p>
+                        // <p>Jogada: {numberOfPlays}</p>
+                        <></>
                     )}
                     <SlotMachine _variables={config}>
                         {Array.from(Array(config.number_of_reels).keys()).map(
@@ -248,7 +257,8 @@ export const Slot = ({
                         )}
                     </SlotMachine>
                     {prizes?.length > 0 ? (
-                        <p>Last Prize: {prizes[prizes.length - 1]}</p>
+                        // <p>Last Prize: {prizes[prizes.length - 1]}</p>
+                        <></>
                     ) : (
                         <></>
                     )}
@@ -328,6 +338,7 @@ export const Slot = ({
 };
 
 const Container = styled.main`
+    position: relative;
     width: 100%;
     height: 100%;
     display: flex;
@@ -338,9 +349,18 @@ const Container = styled.main`
 
     &,
     &::backdrop {
-        background: url('/img/bg_one.png');
-        background-size: 60%;
-        background-position: center -100px;
+        background: url('/img/main-bg.jpg');
+    }
+
+    &:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('/img/header-bg.png');
+        pointer-events: none;
     }
 `;
 /*background-color: #242424;*/
