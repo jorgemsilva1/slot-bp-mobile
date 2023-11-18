@@ -339,8 +339,8 @@ const Container = styled.main`
     &,
     &::backdrop {
         background: url('/img/bg_one.png');
-        background-size: 71%;
-        background-position: center -200px;
+        background-size: 60%;
+        background-position: center -100px;
     }
 `;
 /*background-color: #242424;*/

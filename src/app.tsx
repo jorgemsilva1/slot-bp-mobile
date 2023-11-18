@@ -40,8 +40,8 @@ export function App() {
     const awardsRef = useRef();
     const [slotConfig, setSlotConfig] = useState<SlotConfigType>({
         win_percentage: 'auto',
-        icon_width: 200 /** 5*/,
-        icon_height: 200 /** 5*/,
+        icon_width: 125 /** 5*/,
+        icon_height: 125 /** 5*/,
         icon_num: 5,
         time_per_icon: 100,
         indexes: [0, 0, 0],
