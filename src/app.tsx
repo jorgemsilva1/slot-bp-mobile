@@ -97,7 +97,8 @@ export function App() {
             ...prevValue,
             // icon_num: rewards.length,
             win_percentage: 40,
-            num_of_plays: isBacana === undefined ? null : isBacana ? 10 : 5,
+            num_of_plays:
+                1 || isBacana === undefined ? null : isBacana ? 10 : 5,
         }));
         awardsRef.current = activeSlot;
     }, []);
