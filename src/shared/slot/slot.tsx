@@ -102,15 +102,10 @@ export const Slot = ({
     }, [fetchInitialData]);
 
     const endGame = useCallback(() => {
-        disabled.current = false;
         prizes.current = [];
         ambienceSoundRef.current.setVolume(0.2);
         setGameOver(true);
-
-        setTimeout(() => {
-            handleRestart();
-        }, 15000);
-    }, [handleRestart]);
+    }, []);
 
     /**
      * This functions controls the roll of the reels
@@ -236,8 +231,8 @@ export const Slot = ({
     useEffect(() => {
         window.document.addEventListener('keydown', async (event) => {
             if (event.key === '5' && awards?.length && !disabled.current) {
-                handleReset();
                 disabled.current = true;
+                handleReset();
                 await handleRoll();
             }
         });
@@ -275,37 +270,6 @@ export const Slot = ({
         <FullScreen handle={fsHandle}>
             {!gameOver ? (
                 <Container bg="/img/bg-one.png">
-                    {/* {!clickedPlay ? (
-                        <button
-                            style={{ position: 'absolute', bottom: 50 }}
-                            onClick={() => {
-                                setClickedPlay(true);
-                                ambienceSoundRef.current.setVolume(0.04);
-                                clickSoundRef.current.playSound();
-                            }}
-                        >
-                            PLAY
-                        </button>
-                    ) : clickedPlay && typeof numberOfPlays !== 'number' ? (
-                        <div
-                            style={{
-                                display: 'flex',
-                                columnGap: 8,
-                                position: 'absolute',
-                                bottom: 50,
-                            }}
-                        >
-                            <button onClick={() => handleClickUserType(true)}>
-                                User Bacana
-                            </button>
-                            <button onClick={() => handleClickUserType(false)}>
-                                Non-User Bacana
-                            </button>
-                        </div>
-                    ) : (
-                        // <p>Jogada: {numberOfPlays}</p>
-                        <></>
-                    )} */}
                     <SlotMachine _variables={config}>
                         {Array.from(Array(config.number_of_reels).keys()).map(
                             (index) => (
@@ -320,12 +284,6 @@ export const Slot = ({
                             )
                         )}
                     </SlotMachine>
-                    {prizes?.length > 0 ? (
-                        // <p>Last Prize: {prizes[prizes.length - 1]}</p>
-                        <></>
-                    ) : (
-                        <></>
-                    )}
                 </Container>
             ) : (
                 <Container id="gameover-container" bg="/img/bg_go.png">
