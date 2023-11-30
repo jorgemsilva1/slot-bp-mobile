@@ -16,6 +16,7 @@ import {
 } from '../../helpers/functions';
 import { SoundManager } from '../../components/soundManager/soundManager';
 import { BiFullscreen, BiExitFullscreen } from 'react-icons/bi';
+import PrizeMobileBg from '../../assets/svg/prize_mobile.svg';
 
 // BTNS
 import PlayBtn from '../../assets/svg/play-btn.svg';
@@ -56,6 +57,7 @@ export const Slot = ({
     const [clickedPlay, setClickedPlay] = useState(false);
     const [numberOfPlays, setNumberOfPlays] = useState(null);
     const reelsRef = useRef([]);
+    const [showPrize, setShowPrize] = useState(false);
 
     const prizes = useRef([]);
     const probArr = useRef([]);
@@ -85,6 +87,7 @@ export const Slot = ({
     /** SOUNDS */
 
     const handleReset = useCallback(() => {
+        setShowPrize(false);
         reelsRef.current
             .filter((el) => Boolean(el))
             .map((reel: HTMLElement) => {
@@ -169,6 +172,7 @@ export const Slot = ({
 
         // Check winning status and define rules
         if (deltas.every((value, _, arr) => arr[0] === value)) {
+            setShowPrize(true);
             onWin(deltas[0], contextConfig.value.user_type === 'bacana');
             winSoundRef.current.playSound();
 
@@ -222,6 +226,7 @@ export const Slot = ({
     }, []);
 
     const handleRestart = useCallback(async () => {
+        setShowPrize(false);
         clickSoundRef.current.playSound();
         ambienceSoundRef.current.setVolume(0.2);
         await fetchInitialData();
@@ -320,6 +325,13 @@ export const Slot = ({
                                 ></span>
                             )
                         )}
+                        <WonPrize className={showPrize ? '' : 'hide'}>
+                            <img src={PrizeMobileBg} alt="" />
+                            <span>
+                                <p className="title">Ganhaste:</p>
+                                <p>{myArr.current[myArr.current.length - 1]}</p>
+                            </span>
+                        </WonPrize>
                     </SlotMachine>
                     {prizes?.length > 0 ? (
                         // <p>Last Prize: {prizes[prizes.length - 1]}</p>
@@ -491,6 +503,7 @@ const Container = styled.main`
 /*background-color: #242424;*/
 
 const SlotMachine = styled.section<{ _variables: SlotConfigType }>`
+    position: relative;
     display: flex;
     justify-content: space-between;
     width: ${({ _variables }) =>
@@ -578,4 +591,55 @@ const Background = styled.div`
     height: 100%;
     background: ${({ bg }) => `url('/img/bg_${bg}.png')`};
     background-position: 0 3vh;
+`;
+
+const WonPrize = styled.section`
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 300ms cubic-bezier(0.68, -0.6, 0.32, 1.6);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 250px;
+    filter: drop-shadow(32px 34px 46px rgba(0, 0, 0, 0.3));
+    text-wrap: wrap;
+    text-align: center;
+    pointer-events: none;
+    opacity: 1;
+
+    &.hide {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2);
+        transition: all 300ms ease-in-out;
+    }
+
+    img {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translate(-50%);
+        height: 100%;
+        z-index: 0;
+    }
+
+    p {
+        position: relative;
+        width: 180px;
+        line-height: 34px;
+        color: #fff;
+        font-family: 'Futura';
+        font-size: 34px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin: 0;
+
+        &.title {
+            font-size: 24px;
+            color: #e45525;
+            margin-top: -20px;
+        }
+    }
 `;
