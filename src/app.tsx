@@ -3,16 +3,17 @@ import { Slot } from './shared';
 import { VariablesType } from './shared/slot/slot';
 import axios from 'axios';
 import { CONFIG } from './config/index.';
+import {
+    resetState,
+    setInitialStateData,
+    useConfigContext,
+} from './config/configContext';
 
 export type SlotConfigType = {
-    win_percentage: number | 'auto';
     theme: 'soccer' | 'classic';
     reelImg: string;
     additional_rotations: number;
     number_of_reels: number;
-    user_type: 'regular' | 'bacana';
-    blocked: boolean;
-    num_of_plays: number | null;
 } & VariablesType;
 
 export type SlotReward = {
@@ -36,24 +37,21 @@ export type SlotReward = {
 };
 
 export function App() {
+    const { config, dispatch } = useConfigContext();
     const awardsRef = useRef();
     const [slotConfig, setSlotConfig] = useState<SlotConfigType>({
-        win_percentage: 'auto',
         icon_width: 125 /** 5*/,
         icon_height: 125 /** 5*/,
-        icon_num: 5,
-        time_per_icon: 100,
-        indexes: [0, 0, 0],
         theme: 'soccer',
         reelImg: '/img/reel.png',
+        icon_num: 6,
+        time_per_icon: 80,
+        indexes: [0, 0, 0],
         additional_rotations: 2,
         number_of_reels: 4,
-        user_type: 'regular',
-        blocked: true,
-        num_of_plays: null,
     });
 
-    const fetchInitialData = useCallback(async (isBacana?: boolean) => {
+    const fetchData = useCallback(async () => {
         const response = await axios.get(
             `${
                 CONFIG.apiUrl
@@ -64,10 +62,6 @@ export function App() {
         );
 
         const theme = activeSlot.attributes.theme.data.attributes.theme_id;
-        const winningChance =
-            activeSlot.attributes[
-                isBacana ? 'bacana_user_chance' : 'non_bacana_user_chance'
-            ];
         const rewards = activeSlot.attributes.awards.data.map((award: any) => ({
             id: award.id,
             name: award.attributes.name,
@@ -92,72 +86,95 @@ export function App() {
             rewards,
             theme,
         };
-
-        setSlotConfig((prevValue) => ({
-            ...prevValue,
-            // icon_num: rewards.length,
-            win_percentage: 100,
-            num_of_plays:
-                1 || isBacana === undefined ? null : isBacana ? 10 : 5,
-        }));
         awardsRef.current = activeSlot;
+        return activeSlot;
     }, []);
 
-    console.log(slotConfig);
+    const fetchInitialData = useCallback(
+        async (isBacana?: boolean) => {
+            if (config.user_type) {
+                dispatch(resetState());
+            }
 
-    const handleOnWin = async (wonIndex: number) => {
-        const internalConfig = awardsRef.current;
+            await fetchData();
+            const userType =
+                config.user_type || isBacana === undefined
+                    ? undefined
+                    : isBacana
+                    ? 'bacana'
+                    : 'regular';
+            const numOfPlays =
+                (config.user_type || isBacana) === undefined
+                    ? null
+                    : config.user_type === 'bacana' || isBacana
+                    ? 10
+                    : 5;
 
-        // Find the element with the winning index
-        const element = internalConfig.rewards.find(
-            (el) => el.index === wonIndex
-        );
+            if (!config.user_type && !config.num_of_plays)
+                dispatch(setInitialStateData(userType, numOfPlays, 100));
+        },
+        [config.num_of_plays, config.user_type, dispatch, fetchData]
+    );
 
-        try {
-            // Remove one item from the stock
-            await axios.put(`${CONFIG.apiUrl}/api/awards/${element.id}`, {
-                data: {
-                    qty: element?.qty - 1,
-                },
-            });
+    const handleOnWin = useCallback(
+        async (wonIndex: number, isBacana: boolean) => {
+            const internalConfig = awardsRef.current;
 
-            // Add the play
-            await axios.post(`${CONFIG.apiUrl}/api/plays`, {
-                data: {
-                    won: true,
-                    won_premium: element?.is_premium_prize,
-                    is_bacana: false,
-                    prize_id: element.id,
-                    config_id: internalConfig.id,
-                },
-            });
-            await fetchInitialData();
-        } catch (err) {
-            console.log(err);
-        }
-    };
+            // Find the element with the winning index
+            const element = internalConfig.rewards.find(
+                (el) => el.index === wonIndex
+            );
 
-    const handleOnLose = async () => {
-        const internalConfig = awardsRef.current;
-        try {
-            // If the player lost, just save the play as lost
-            await axios.post(`${CONFIG.apiUrl}/api/plays`, {
-                data: {
-                    won: false,
-                    won_premium: false,
-                    is_bacana: false,
-                    config_id: internalConfig.id,
-                },
-            });
-            await fetchInitialData();
-        } catch (err) {
-            console.log(err);
-        }
-    };
+            try {
+                // Remove one item from the stock
+                await axios.put(`${CONFIG.apiUrl}/api/awards/${element.id}`, {
+                    data: {
+                        qty: element?.qty - 1,
+                    },
+                });
+
+                // Add the play
+                await axios.post(`${CONFIG.apiUrl}/api/plays`, {
+                    data: {
+                        won: true,
+                        won_premium: element?.is_premium_prize,
+                        is_bacana: isBacana,
+                        prize_id: element.id,
+                        config_id: internalConfig.id,
+                    },
+                });
+                await fetchData();
+            } catch (err) {
+                console.log(err);
+            }
+        },
+        [fetchData]
+    );
+
+    const handleOnLose = useCallback(
+        async (isBacana: boolean) => {
+            const internalConfig = awardsRef.current;
+            try {
+                // If the player lost, just save the play as lost
+                await axios.post(`${CONFIG.apiUrl}/api/plays`, {
+                    data: {
+                        won: false,
+                        won_premium: false,
+                        is_bacana: isBacana,
+                        config_id: internalConfig.id,
+                    },
+                });
+                await fetchData();
+            } catch (err) {
+                console.log(err);
+            }
+        },
+        [fetchData]
+    );
 
     useEffect(() => {
         fetchInitialData();
-    }, [fetchInitialData]);
+    }, []);
 
     return (
         <>

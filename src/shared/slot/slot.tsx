@@ -9,7 +9,11 @@ import { FullScreen, useFullScreenHandle } from 'react-full-screen';
 import { FaVolumeUp, FaVolumeOff } from 'react-icons/fa';
 import styled from 'styled-components';
 import { SlotConfigType, SlotReward } from '../../app';
-import { probabilityCalc, shouldBeTrue } from '../../helpers/functions';
+import {
+    arrayOfProbabilities,
+    probabilityCalc,
+    shouldBeTrue,
+} from '../../helpers/functions';
 import { SoundManager } from '../../components/soundManager/soundManager';
 import { BiFullscreen, BiExitFullscreen } from 'react-icons/bi';
 
@@ -18,6 +22,7 @@ import PlayBtn from '../../assets/svg/play-btn.svg';
 import UserBacanaBtn from '../../assets/svg/btn-user-bp.svg';
 import NonUserBacanaBtn from '../../assets/svg/btn-user-non-bp.svg';
 import RollBtn from '../../assets/svg/roll-btn.svg';
+import { useConfigContext } from '../../config/configContext';
 
 type SlotProps = {
     onWin: (wonindex: number) => any;
@@ -41,15 +46,19 @@ export const Slot = ({
     onLose,
     fetchInitialData,
 }: SlotProps) => {
+    const { config: _contextConfig, dispatch } = useConfigContext();
+    const contextConfig = useRef({}).current;
+    contextConfig.value = _contextConfig;
     const fsHandle = useFullScreenHandle();
     const myArr = useRef([]);
-    const disabled = useRef(false);
+    const disabled = useRef(true);
     const [gameOver, setGameOver] = useState(false);
-    const [clickedPlay, setClickedPlay] = useState(true);
-    const [numberOfPlays, setNumberOfPlays] = useState(1);
-    const [prizes, setPrizes] = useState<string[]>([]);
+    const [clickedPlay, setClickedPlay] = useState(false);
+    const [numberOfPlays, setNumberOfPlays] = useState(null);
     const reelsRef = useRef([]);
 
+    const prizes = useRef([]);
+    const probArr = useRef([]);
     // SOUNDS REF
     const [hasSound, setHasSound] = useState(false);
     const ambienceSoundRef = useRef(null);
@@ -82,6 +91,13 @@ export const Slot = ({
                 reel.style.transition = `none`;
                 reel.style.backgroundPositionY = `0px`;
             });
+    }, []);
+
+    const endGame = useCallback(() => {
+        disabled.current = true;
+        prizes.current = [];
+        ambienceSoundRef.current.setVolume(0.2);
+        setGameOver(true);
     }, []);
 
     /**
@@ -121,18 +137,19 @@ export const Slot = ({
 
     const handleRoll = useCallback(async () => {
         disabled.current = true;
+        const probability = probArr.current[myArr.current.length];
 
         rollSoundRef.current.playSound();
 
         const willAlwaysWin =
-            config.win_percentage === 'auto'
+            contextConfig.value.win_percentage === 'auto'
                 ? false
-                : shouldBeTrue(config.win_percentage);
+                : shouldBeTrue(probability);
 
         // let winningSymbolIndex = willAlwaysWin
         //     ? Math.floor(Math.random() * config.icon_num)
         //     : null;
-        const item = probabilityCalc(awards);
+        const item = probabilityCalc(awards, prizes.current);
 
         const winningSymbolIndex = willAlwaysWin ? item.index : null;
 
@@ -152,11 +169,25 @@ export const Slot = ({
 
         // Check winning status and define rules
         if (deltas.every((value, _, arr) => arr[0] === value)) {
-            setPrizes((prevValue) => [...prevValue, item.name]);
-            onWin(deltas[0]);
+            onWin(deltas[0], contextConfig.value.user_type === 'bacana');
             winSoundRef.current.playSound();
+
+            prizes.current = [...prizes.current, item.index];
+
+            // if (prizes.current.length === 1) {
+            //     // If first prize, add to the array and change probability to a quarter
+            //     dispatch(
+            //         setWinPercentage(
+            //             contextConfig.value.user_type === 'bacana' ? 20 : 15
+            //         )
+            //     );
+            // } else
+            if (prizes.current.length === 2) {
+                // If is second prize, finish the game
+                endGame();
+            }
         } else {
-            onLose();
+            onLose(contextConfig.value.user_type === 'bacana');
             lostSoundRef.current.playSound();
         }
 
@@ -164,7 +195,15 @@ export const Slot = ({
         setNumberOfPlays((prevValue) =>
             typeof prevValue === 'number' ? prevValue - 1 : null
         );
-    }, [config.win_percentage, awards, roll, onWin, onLose]);
+    }, [
+        contextConfig.value.win_percentage,
+        contextConfig.value.user_type,
+        awards,
+        roll,
+        onWin,
+        endGame,
+        onLose,
+    ]);
 
     const handleClickUserType = useCallback(
         async (bool: boolean) => {
@@ -176,15 +215,23 @@ export const Slot = ({
         [fetchInitialData]
     );
 
+    const handlePlay = useCallback(() => {
+        setClickedPlay(true);
+        ambienceSoundRef.current.setVolume(0.04);
+        clickSoundRef.current.playSound();
+    }, []);
+
     const handleRestart = useCallback(async () => {
         clickSoundRef.current.playSound();
         ambienceSoundRef.current.setVolume(0.2);
         await fetchInitialData();
         myArr.current = [];
-        disabled.current = false;
+        disabled.current = [];
+        prizes.current = [];
         reelsRef.current = [];
         setGameOver(false);
-        setPrizes([]);
+        setClickedPlay(false);
+        setNumberOfPlays(null);
     }, [fetchInitialData]);
 
     useEffect(() => {
@@ -206,16 +253,19 @@ export const Slot = ({
     }, [awards?.length, handleReset, handleRoll]);
 
     useEffect(() => {
-        if (config.num_of_plays) setNumberOfPlays(config.num_of_plays);
-    }, [config.num_of_plays]);
+        if (contextConfig.value.num_of_plays) {
+            setNumberOfPlays(contextConfig.value.num_of_plays);
+            probArr.current = arrayOfProbabilities(
+                contextConfig.value.num_of_plays
+            );
+        }
+    }, [contextConfig.value.num_of_plays]);
 
     useEffect(() => {
         if (numberOfPlays === 0) {
-            ambienceSoundRef.current.setVolume(0.2);
-
-            // setGameOver(true);
+            endGame();
         }
-    }, [numberOfPlays]);
+    }, [endGame, numberOfPlays]);
 
     const bg = useMemo(
         () => (!gameOver ? '/img/bg-one.png' : '/img/bg_go.png'),
@@ -226,7 +276,7 @@ export const Slot = ({
         <FullScreen handle={fsHandle}>
             {!gameOver ? (
                 <Container bg="/img/bg-one.png">
-                    {!clickedPlay ? (
+                    {/* {!clickedPlay ? (
                         <button
                             style={{ position: 'absolute', bottom: 50 }}
                             onClick={() => {
@@ -256,7 +306,7 @@ export const Slot = ({
                     ) : (
                         // <p>Jogada: {numberOfPlays}</p>
                         <></>
-                    )}
+                    )} */}
                     <SlotMachine _variables={config}>
                         {Array.from(Array(config.number_of_reels).keys()).map(
                             (index) => (
@@ -431,7 +481,7 @@ const Container = styled.main`
                 font-size: 16px;
 
                 &.prize {
-                    font-size: 20px;
+                    font-size: 24px !important;
                     color: #e45525;
                 }
             }
