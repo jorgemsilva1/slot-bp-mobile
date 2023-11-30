@@ -170,7 +170,7 @@ export const Slot = ({
 
         myArr.current = [
             ...myArr.current,
-            winningSymbolIndex ? item.name : null,
+            winningSymbolIndex !== null ? item.name : null,
         ];
         // console.table(myArr.current);
 
