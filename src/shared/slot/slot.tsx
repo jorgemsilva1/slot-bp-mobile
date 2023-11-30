@@ -51,10 +51,10 @@ export const Slot = ({
     contextConfig.value = _contextConfig;
     const fsHandle = useFullScreenHandle();
     const myArr = useRef([]);
-    const disabled = useRef(true);
+    const disabled = useRef(false);
     const [gameOver, setGameOver] = useState(false);
-    const [clickedPlay, setClickedPlay] = useState(false);
-    const [numberOfPlays, setNumberOfPlays] = useState(null);
+    const [clickedPlay, setClickedPlay] = useState(true);
+    const [numberOfPlays, setNumberOfPlays] = useState(1);
     const reelsRef = useRef([]);
 
     const prizes = useRef([]);
@@ -80,10 +80,6 @@ export const Slot = ({
         }
     };
 
-    console.log(ambienceSoundRef.current);
-
-    /** SOUNDS */
-
     const handleReset = useCallback(() => {
         reelsRef.current
             .filter((el) => Boolean(el))
@@ -93,12 +89,28 @@ export const Slot = ({
             });
     }, []);
 
+    const handleRestart = useCallback(async () => {
+        clickSoundRef.current.playSound();
+        ambienceSoundRef.current.setVolume(0.2);
+        await fetchInitialData();
+        myArr.current = [];
+        disabled.current = false;
+        prizes.current = [];
+        reelsRef.current = [];
+        setGameOver(false);
+        setNumberOfPlays(1);
+    }, [fetchInitialData]);
+
     const endGame = useCallback(() => {
-        disabled.current = true;
+        disabled.current = false;
         prizes.current = [];
         ambienceSoundRef.current.setVolume(0.2);
         setGameOver(true);
-    }, []);
+
+        setTimeout(() => {
+            handleRestart();
+        }, 15000);
+    }, [handleRestart]);
 
     /**
      * This functions controls the roll of the reels
@@ -220,19 +232,6 @@ export const Slot = ({
         ambienceSoundRef.current.setVolume(0.04);
         clickSoundRef.current.playSound();
     }, []);
-
-    const handleRestart = useCallback(async () => {
-        clickSoundRef.current.playSound();
-        ambienceSoundRef.current.setVolume(0.2);
-        await fetchInitialData();
-        myArr.current = [];
-        disabled.current = [];
-        prizes.current = [];
-        reelsRef.current = [];
-        setGameOver(false);
-        setClickedPlay(false);
-        setNumberOfPlays(null);
-    }, [fetchInitialData]);
 
     useEffect(() => {
         window.document.addEventListener('keydown', async (event) => {
@@ -481,7 +480,7 @@ const Container = styled.main`
                 font-size: 16px;
 
                 &.prize {
-                    font-size: 24px !important;
+                    font-size: 36px !important;
                     color: #e45525;
                 }
             }

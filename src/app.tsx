@@ -103,12 +103,7 @@ export function App() {
                     : isBacana
                     ? 'bacana'
                     : 'regular';
-            const numOfPlays =
-                (config.user_type || isBacana) === undefined
-                    ? null
-                    : config.user_type === 'bacana' || isBacana
-                    ? 10
-                    : 5;
+            const numOfPlays = 1;
 
             if (!config.user_type && !config.num_of_plays)
                 dispatch(setInitialStateData(userType, numOfPlays, 100));
